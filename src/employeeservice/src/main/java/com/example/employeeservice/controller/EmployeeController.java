@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
@@ -19,9 +21,15 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 public class EmployeeController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmployeeController.class);
+    private final Counter employeeSearchCounter;
 
     @Autowired
     EmployeeRepository repository;
+
+    public EmployeeController(MeterRegistry registry) {
+
+        employeeSearchCounter = registry.counter("employeeSearchCounter");
+    }
 
     @PostMapping("/")
     public Employee add(@RequestBody Employee employee) {
@@ -38,6 +46,7 @@ public class EmployeeController {
     @GetMapping("/")
     public Iterable<Employee> findAll() {
         LOGGER.info("Find all employees {}", keyValue("endpoint", "/"));
+        employeeSearchCounter.increment();
         return repository.findAll();
     }
 
